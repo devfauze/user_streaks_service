@@ -8,13 +8,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  bestStreak Int     @default(0)
-  streaks   Streak[]
-  createdAt DateTime @default(now())
+  id            String          @id @default(uuid())
+  email         String          @unique
+  name          String
+  password      String
+  bestStreak    Int             @default(0)
+  streaks       Streak[]
+  createdAt     DateTime        @default(now())
+  StreakHistory StreakHistory[]
+
+  sentFriendRequests     Friendship[] @relation("UserFriendships")
+  receivedFriendRequests Friendship[] @relation("FriendUserFriendships")
 }
 
 model Streak {
@@ -24,4 +28,34 @@ model Streak {
   lastOpen  DateTime
   count     Int      @default(1)
   createdAt DateTime @default(now())
+}
+
+model StreakHistory {
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  date   DateTime @default(now()) @map("streak_date")
+  count  Int      @default(1)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  userId    String
+  friendId  String
+  status    FriendshipStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriendships", fields: [userId], references: [id])
+  friend User @relation("FriendUserFriendships", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

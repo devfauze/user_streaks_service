@@ -22,4 +22,13 @@ router.get("/:email", authMiddleware, async (req, res, next) => {
     }
 });
 
+// @ts-ignore
+router.get("/:userId/history", authMiddleware, async (req, res, next) => {
+    try {
+        await streakController.getStreakHistory(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
 export default router;

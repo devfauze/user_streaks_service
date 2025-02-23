@@ -25,4 +25,19 @@ export const streakController = {
             return res.status(400).json({ error: error.message });
         }
     },
+
+    async getStreakHistory(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+
+            if (!userId) return res.status(400).json({ error: "userId é obrigatório" });
+
+            const history = await streakService.getStreakHistory(userId);
+
+            return res.json(history);
+        } catch (error: any) {
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
 };

@@ -7,43 +7,45 @@ export const streakService = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let streak = await prisma.streak.findFirst({
-            where: { userId },
-            orderBy: { lastOpen: "desc" },
-        });
+        return await prisma.$transaction(async (tx) => {
+            let streak = await tx.streak.findFirst({
+                where: { userId },
+                orderBy: { lastOpen: "desc" },
+            });
 
-        if (streak) {
-            const lastOpenDate = new Date(streak.lastOpen);
-            lastOpenDate.setHours(0, 0, 0, 0);
-            const diff = (today.getTime() - lastOpenDate.getTime()) / (1000 * 60 * 60 * 24);
+            if (streak) {
+                const lastOpenDate = new Date(streak.lastOpen);
+                lastOpenDate.setHours(0, 0, 0, 0);
+                const diff = (today.getTime() - lastOpenDate.getTime()) / (1000 * 60 * 60 * 24);
 
-            if (diff < 1) {
-                throw new Error("Streak já registrado hoje.");
-            } else if (diff < 2) {
-                streak = await prisma.streak.update({
-                    where: { id: streak.id },
-                    data: { count: streak.count + 1, lastOpen: today },
-                });
+                if (diff < 1) {
+                    throw new Error("Streak já registrado hoje.");
+                } else if (diff < 2) {
+                    streak = await tx.streak.update({
+                        where: { id: streak.id },
+                        data: { count: streak.count + 1, lastOpen: today },
+                    });
+                } else {
+                    streak = await tx.streak.create({
+                        data: { userId, lastOpen: today, count: 1 },
+                    });
+                }
             } else {
-                streak = await prisma.streak.create({
+                streak = await tx.streak.create({
                     data: { userId, lastOpen: today, count: 1 },
                 });
             }
-        } else {
-            streak = await prisma.streak.create({
-                data: { userId, lastOpen: today, count: 1 },
-            });
-        }
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (streak.count > user!.bestStreak) {
-            await prisma.user.update({
-                where: { id: userId },
-                data: { bestStreak: streak.count },
-            });
-        }
+            const user = await tx.user.findUnique({ where: { id: userId } });
+            if (streak.count > (user!.bestStreak || 0)) {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: { bestStreak: streak.count },
+                });
+            }
 
-        return { currentStreak: streak.count, bestStreak: user!.bestStreak };
+            return { currentStreak: streak.count, bestStreak: user!.bestStreak };
+        });
     },
 
     async getStreak(email: string) {
@@ -63,5 +65,12 @@ export const streakService = {
         });
 
         return { currentStreak: streak?.count || 0, bestStreak: user.bestStreak || 0 };
+    },
+
+    async getStreakHistory(userId: string) {
+        return await prisma.streakHistory.findMany({
+            where: { userId },
+            orderBy: { date: "desc" },
+        });
     }
 };

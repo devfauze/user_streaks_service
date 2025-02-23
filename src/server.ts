@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import streakRoutes from "./routes/streak-routes";
 import authRoutes from "./routes/auth-routes";
+import friendshipRoutes from "./routes/friendship-routes";
 
 dotenv.config();
 
@@ -18,3 +19,4 @@ app.listen(PORT, () => {
 
 app.use("/streaks", streakRoutes);
 app.use("/auth", authRoutes);
+app.use("/friends", friendshipRoutes);
