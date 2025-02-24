@@ -27,7 +27,7 @@ router.post("/decline-friend-request", async (req, res, next) => {
     }
 });
 
-router.get("/friends/:userId", async (req, res, next) => {
+router.get("/get-friends/:userId", async (req, res, next) => {
     try {
         await friendshipController.getFriends(req, res);
     } catch (error) {

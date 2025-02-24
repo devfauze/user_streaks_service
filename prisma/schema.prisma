@@ -44,6 +44,7 @@ model StreakHistory {
 model Friendship {
   id        String   @id @default(uuid())
   userId    String
+  senderEmail String?
   friendId  String
   status    FriendshipStatus @default(PENDING)
   createdAt DateTime @default(now())

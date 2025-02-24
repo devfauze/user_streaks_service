@@ -1,26 +1,32 @@
 import { PrismaClient, FriendshipStatus } from "@prisma/client";
+import {userService} from "./userService";
 
 const prisma = new PrismaClient();
 
 export const friendshipService = {
-    async sendFriendRequest(userId: string, friendId: string) {
-        if (userId === friendId) throw new Error("Você não pode adicionar a si mesmo como amigo.");
+    async sendFriendRequest(userId: string, senderEmail: string, friendEmail: string) {
+        if (!userId || !friendEmail) throw new Error("Parâmetros inválidos.");
+
+        const friend = await userService.findUserByEmail(friendEmail);
+        if (!friend) throw new Error("Usuário não encontrado.");
+
+        if (userId === friend.id) throw new Error("Você não pode adicionar a si mesmo como amigo.");
 
         return await prisma.friendship.create({
-            data: { userId, friendId, status: FriendshipStatus.PENDING },
+            data: { userId, senderEmail, friendId: friend.id, status: FriendshipStatus.PENDING },
         });
     },
 
     async acceptFriendRequest(userId: string, friendId: string) {
         return await prisma.friendship.updateMany({
-            where: { userId: friendId, friendId: userId, status: FriendshipStatus.PENDING },
+            where: { userId: userId, friendId: friendId, status: FriendshipStatus.PENDING },
             data: { status: FriendshipStatus.ACCEPTED },
         });
     },
 
-    async declineFriendRequest(userId: string, friendId: string) {
+    async declineFriendRequest(requestId: string) {
         return await prisma.friendship.deleteMany({
-            where: { userId: friendId, friendId: userId, status: FriendshipStatus.PENDING },
+            where: { id: requestId, status: FriendshipStatus.PENDING },
         });
     },
 
@@ -43,12 +49,15 @@ export const friendshipService = {
         });
     },
 
-    async removeFriend(userId: string, friendId: string) {
+    async removeFriend(userId: string, friendEmail: string) {
+        const friend = await userService.findUserByEmail(friendEmail);
+        if (!friend) throw new Error("Usuário não encontrado.");
+
         return await prisma.friendship.deleteMany({
             where: {
                 OR: [
-                    { userId, friendId, status: FriendshipStatus.ACCEPTED },
-                    { userId: friendId, friendId: userId, status: FriendshipStatus.ACCEPTED },
+                    { userId, friendId: friend.id, status: FriendshipStatus.ACCEPTED },
+                    { userId: friend.id, friendId: userId, status: FriendshipStatus.ACCEPTED },
                 ],
             },
         });

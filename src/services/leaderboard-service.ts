@@ -10,6 +10,7 @@ export const leaderboardService = {
                     select: {
                         id: true,
                         name: true,
+                        email: true, // Adicionando o email
                         bestStreak: true
                     },
                     orderBy: { bestStreak: "desc" }
@@ -37,6 +38,7 @@ export const leaderboardService = {
                     select: {
                         id: true,
                         name: true,
+                        email: true, // Adicionando o email
                         bestStreak: true
                     },
                     orderBy: { bestStreak: "desc" }

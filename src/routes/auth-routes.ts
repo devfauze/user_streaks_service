@@ -12,7 +12,7 @@ router.post("/register", async (req, res, next) => {
     }
 });
 
-router.post("/login", loginLimiter, async (req, res, next) => {
+router.post("/login", async (req, res, next) => {
     try {
         await authController.login(req, res);
     } catch (error) {
